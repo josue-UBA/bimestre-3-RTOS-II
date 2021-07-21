@@ -89,13 +89,20 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  uint8_t dataT[14]= "hola\n\r";
+  uint8_t dataR[1]= "";
+
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_UART_Transmit(&huart2, dataT, 14, HAL_MAX_DELAY);
   while (1)
   {
+	  if(!HAL_UART_Receive(&huart2,dataR,1,HAL_MAX_DELAY)){
+		  HAL_UART_Transmit(&huart2, dataR, 1, HAL_MAX_DELAY);
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

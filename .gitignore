@@ -1,9 +1,10 @@
 
 .metadata/
-proyecto/.settings/language.settings.xml
-proyecto/.settings/stm32cubeide.project.prefs
+proyecto/.settings/
+proyecto/Debug/
 proyecto/.mxproject
 proyecto/.cproject
 proyecto/.project
 proyecto/STM32F401RETX_FLASH.ld
 proyecto/STM32F401RETX_RAM.ld
+proyecto/proyecto Debug.launch
