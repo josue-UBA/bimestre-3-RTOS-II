@@ -25,28 +25,39 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include "qmpool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef char *tPool;
 typedef enum {
 	estado_inicio, estado_parentesis, estado_almacena,
 } estado;
-struct Books {
-   uint8_t paq[0];
-   char  author[50];
-   char  subject[100];
-   int   book_id;
-} book;
+typedef struct {
+	unsigned char secuencia[4];
+	char *mensaje;
+	QMPool *pool;
+} _sFrame;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TAM_PAQUETE 20
+#define PACKET_SIZE_200  		200							    // Tamanio del paquete
+#define POOL_TOTAL_BLOCKS_200	4								// Cuantos paquetes
+#define PACKET_SIZE_100	  		100							    // Tamanio del paquete
+#define POOL_TOTAL_BLOCKS_100 	8								// Cuantos paquetes
+#define PACKET_SIZE_50  		50							    // Tamanio del paquete
+#define POOL_TOTAL_BLOCKS_50 	16								// Cuantos paquetes
+#define PACKET_SIZE_25  		25							    // Tamanio del paquete
+#define POOL_TOTAL_BLOCKS_25 	32								// Cuantos paquetes
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define TAM_PAQUETE 20
+#define POOL_SIZE 				(POOL_TOTAL_BLOCKS_200*PACKET_SIZE_200) //Todos los pools tienen el mismo tamaño
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -73,14 +84,15 @@ const osMessageQueueAttr_t cola_3_2_attributes = { .name = "cola_3_2" };
 /* Definitions for cola_2_1 */
 osMessageQueueId_t cola_2_1Handle;
 const osMessageQueueAttr_t cola_2_1_attributes = { .name = "cola_2_1" };
+
 /* USER CODE BEGIN PV */
-uint8_t dataT[14] = "hola\n\r";
 uint8_t dataR[1] = "";
 uint8_t paquete[200] = "";
-uint8_t paquete_vacio[200] = "";
 estado estado_actual = estado_inicio;
 int contador = 0;
-/* USER CODE END PV */
+tPool poolPtr_200, poolPtr_100, poolPtr_50, poolPtr_25; //puntero al segmento de memoria que albergara el pool
+QMPool poolMem_200, poolMem_100, poolMem_50, poolMem_25; //memory pool (contienen la informacion que necesita la biblioteca qmpool.h)
+		/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -108,7 +120,26 @@ int valida_crc();
  */
 int main(void) {
 	/* USER CODE BEGIN 1 */
+	poolPtr_200 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
+	configASSERT(poolPtr_200!=NULL);
+	poolPtr_100 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
+	configASSERT(poolPtr_100!=NULL);
+	poolPtr_50 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
+	configASSERT(poolPtr_50!=NULL);
+	poolPtr_25 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
+	configASSERT(poolPtr_25!=NULL);
+	printf("tamaño de uint_8: %d", sizeof(uint8_t));
+	printf("tamaño de char: %d", sizeof(char));
 
+	//	Creo los pools de memoria
+	QMPool_init(&poolMem_200, (tPool) poolPtr_200, POOL_SIZE * sizeof(tPool),
+			PACKET_SIZE_200); //Tamanio del segmento de memoria reservado
+	QMPool_init(&poolMem_100, (tPool) poolPtr_100, POOL_SIZE * sizeof(tPool),
+			PACKET_SIZE_100);
+	QMPool_init(&poolMem_50, (tPool) poolPtr_50, POOL_SIZE * sizeof(tPool),
+			PACKET_SIZE_50);
+	QMPool_init(&poolMem_25, (tPool) poolPtr_25, POOL_SIZE * sizeof(tPool),
+			PACKET_SIZE_25);
 	/* USER CODE END 1 */
 
 	/* MCU Configuration--------------------------------------------------------*/
