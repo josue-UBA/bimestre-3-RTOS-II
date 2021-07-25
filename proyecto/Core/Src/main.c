@@ -32,6 +32,12 @@
 typedef enum {
 	estado_inicio, estado_parentesis, estado_almacena,
 } estado;
+struct Books {
+   uint8_t paq[0];
+   char  author[50];
+   char  subject[100];
+   int   book_id;
+} book;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
