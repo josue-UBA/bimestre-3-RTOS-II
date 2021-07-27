@@ -43,10 +43,10 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = { .name = "defaultTask",
-		.stack_size = 128 * 4, .priority = (osPriority_t) osPriorityNormal, };
+osThreadId uartTaskHandle;
+osThreadId ledTaskHandle;
+osTimerId periodicTimerHandle;
+osTimerId onceTimerHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -55,7 +55,10 @@ const osThreadAttr_t defaultTask_attributes = { .name = "defaultTask",
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-void StartDefaultTask(void *argument);
+void UartTask(void const *argument);
+void LedTask(void const *argument);
+void PTCallback(void const *argument);
+void OTCallback(void const *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -98,9 +101,6 @@ int main(void) {
 
 	/* USER CODE END 2 */
 
-	/* Init scheduler */
-	osKernelInitialize();
-
 	/* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
 	/* USER CODE END RTOS_MUTEX */
@@ -108,6 +108,16 @@ int main(void) {
 	/* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
 	/* USER CODE END RTOS_SEMAPHORES */
+
+	/* Create the timer(s) */
+	/* definition and creation of periodicTimer */
+	osTimerDef(periodicTimer, PTCallback);
+	periodicTimerHandle = osTimerCreate(osTimer(periodicTimer), osTimerPeriodic,
+	NULL);
+
+	/* definition and creation of onceTimer */
+	osTimerDef(onceTimer, OTCallback);
+	onceTimerHandle = osTimerCreate(osTimer(onceTimer), osTimerOnce, NULL);
 
 	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
@@ -118,17 +128,17 @@ int main(void) {
 	/* USER CODE END RTOS_QUEUES */
 
 	/* Create the thread(s) */
-	/* creation of defaultTask */
-	defaultTaskHandle = osThreadNew(StartDefaultTask, NULL,
-			&defaultTask_attributes);
+	/* definition and creation of uartTask */
+	osThreadDef(uartTask, UartTask, osPriorityNormal, 0, 128);
+	uartTaskHandle = osThreadCreate(osThread(uartTask), NULL);
+
+	/* definition and creation of ledTask */
+	osThreadDef(ledTask, LedTask, osPriorityNormal, 0, 128);
+	ledTaskHandle = osThreadCreate(osThread(ledTask), NULL);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
 	/* USER CODE END RTOS_THREADS */
-
-	/* USER CODE BEGIN RTOS_EVENTS */
-	/* add events, ... */
-	/* USER CODE END RTOS_EVENTS */
 
 	/* Start scheduler */
 	osKernelStart();
@@ -252,20 +262,56 @@ static void MX_GPIO_Init(void) {
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_UartTask */
 /**
- * @brief  Function implementing the defaultTask thread.
+ * @brief  Function implementing the uartTask thread.
  * @param  argument: Not used
  * @retval None
  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument) {
+/* USER CODE END Header_UartTask */
+void UartTask(void const *argument) {
 	/* USER CODE BEGIN 5 */
+	osTimerStart(periodicTimerHandle, 1000);
 	/* Infinite loop */
 	for (;;) {
-		osDelay(1);
+		HAL_UART_Transmit(&huart2, "Sending from UART\n\r", 40, 100);
+		osDelay(2000);
 	}
 	/* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_LedTask */
+/**
+ * @brief Function implementing the ledTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_LedTask */
+void LedTask(void const *argument) {
+	/* USER CODE BEGIN LedTask */
+	/* Infinite loop */
+	for (;;) {
+		if (!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) {
+			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+			osTimerStart(onceTimerHandle, 4000);
+		}
+		osDelay(20);
+	}
+	/* USER CODE END LedTask */
+}
+
+/* PTCallback function */
+void PTCallback(void const *argument) {
+	/* USER CODE BEGIN PTCallback */
+	HAL_UART_Transmit(&huart2, "Sending from PERIODIC TIMER\n\r", 40, 100);
+	/* USER CODE END PTCallback */
+}
+
+/* OTCallback function */
+void OTCallback(void const *argument) {
+	/* USER CODE BEGIN OTCallback */
+	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+	/* USER CODE END OTCallback */
 }
 
 /**
