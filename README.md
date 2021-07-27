@@ -12,3 +12,8 @@
 - informacion: UART callback
 - branch: UART_2
 - enlace: https://www.youtube.com/watch?v=-Hz3UCTYOfA&list=PLvHxU_pY8Jf9dtWHzPJY2yyoF5WFkhugz&index=3
+
+# video cuatro
+- informacion: UART timer
+- branch: RTOS-TIMER
+- enlace: https://www.youtube.com/watch?v=9H6vhgxQTTk
