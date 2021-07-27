@@ -33,10 +33,10 @@ typedef enum {
 	estado_inicio, estado_parentesis, estado_almacena,
 } estado;
 struct Books {
-   uint8_t paq[0];
-   char  author[50];
-   char  subject[100];
-   int   book_id;
+	uint8_t paq[0];
+	char author[50];
+	char subject[100];
+	int book_id;
 } book;
 /* USER CODE END PTD */
 
@@ -438,7 +438,6 @@ void funcion_capa_1(void *argument) {
  * @retval None
  */
 /* USER CODE END Header_funcion_capa_2 */
-
 void funcion_capa_2(void *argument) {
 	/* USER CODE BEGIN funcion_capa_2 */
 	printf("funcion capa 2\n\r");
