@@ -66,45 +66,23 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
-/* Definitions for capa_1 */
-osThreadId_t capa_1Handle;
-const osThreadAttr_t capa_1_attributes = { .name = "capa_1", .stack_size = 128 * 4, .priority = (osPriority_t) osPriorityNormal, };
-/* Definitions for capa_2 */
-osThreadId_t capa_2Handle;
-const osThreadAttr_t capa_2_attributes = { .name = "capa_2", .stack_size = 128 * 4, .priority = (osPriority_t) osPriorityNormal, };
-/* Definitions for capa_3 */
-osThreadId_t capa_3Handle;
-const osThreadAttr_t capa_3_attributes = { .name = "capa_3", .stack_size = 128 * 4, .priority = (osPriority_t) osPriorityNormal, };
-/* Definitions for cola_2_3 */
-osMessageQueueId_t cola_2_3Handle;
-const osMessageQueueAttr_t cola_2_3_attributes = { .name = "cola_2_3" };
-/* Definitions for cola_3_2 */
-osMessageQueueId_t cola_3_2Handle;
-const osMessageQueueAttr_t cola_3_2_attributes = { .name = "cola_3_2" };
-/* Definitions for cola_2_1 */
-osMessageQueueId_t cola_2_1Handle;
-const osMessageQueueAttr_t cola_2_1_attributes = { .name = "cola_2_1" };
-
+/* Definitions for defaultTask */
 /* USER CODE BEGIN PV */
-uint8_t dataR[1] = "";
-uint8_t paquete[200] = "";
-estado estado_actual = estado_inicio;
-int contador = 0;
 tPool poolPtr_200, poolPtr_100, poolPtr_50, poolPtr_25; //puntero al segmento de memoria que albergara el pool
 QMPool poolMem_200, poolMem_100, poolMem_50, poolMem_25; //memory pool (contienen la informacion que necesita la biblioteca qmpool.h)
+tPool poolPtr_200, poolPtr_100, poolPtr_50, poolPtr_25; //puntero al segmento de memoria que albergara el pool
+QMPool poolMem_200, poolMem_100, poolMem_50, poolMem_25; //memory pool (contienen la informacion que necesita la biblioteca qmpool.h)
+QueueHandle_t queue_c2_to_c3;
+QueueHandle_t queue_c3_to_c2;
+QueueHandle_t queue_c2_to_c1;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void
-SystemClock_Config(void);
-static void
-MX_GPIO_Init(void);
-static void
-MX_USART2_UART_Init(void);
-void funcion_capa_1(void *argument);
-void funcion_capa_2(void *argument);
-void funcion_capa_3(void *argument);
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_USART2_UART_Init(void);
+void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 void maquina_de_estados();
@@ -127,6 +105,11 @@ int main(void) {
 	// ---------- CONFIGURACIONES ------------------------------
 	boardConfig();					// Inicializar y configurar la plataforma
 
+	//	Creo los pools de memoria
+	QMPool_init(&poolMem_200, (tPool) poolPtr_200, POOL_SIZE * sizeof(tPool), PACKET_SIZE_200); //Tamanio del segmento de memoria reservado
+	QMPool_init(&poolMem_100, (tPool) poolPtr_100, POOL_SIZE * sizeof(tPool), PACKET_SIZE_100);
+	QMPool_init(&poolMem_50, (tPool) poolPtr_50, POOL_SIZE * sizeof(tPool), PACKET_SIZE_50);
+	QMPool_init(&poolMem_25, (tPool) poolPtr_25, POOL_SIZE * sizeof(tPool), PACKET_SIZE_25);
 	//	Reservo memoria para el memory pool
 	poolPtr_200 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
 	configASSERT(poolPtr_200!=NULL);
@@ -136,16 +119,6 @@ int main(void) {
 	configASSERT(poolPtr_50!=NULL);
 	poolPtr_25 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
 	configASSERT(poolPtr_25!=NULL);
-
-	//	Creo los pools de memoria
-	QMPool_init(&poolMem_200, (tPool) poolPtr_200, POOL_SIZE * sizeof(tPool),
-	PACKET_SIZE_200); //Tamanio del segmento de memoria reservado
-	QMPool_init(&poolMem_100, (tPool) poolPtr_100, POOL_SIZE * sizeof(tPool),
-	PACKET_SIZE_100);
-	QMPool_init(&poolMem_50, (tPool) poolPtr_50, POOL_SIZE * sizeof(tPool),
-	PACKET_SIZE_50);
-	QMPool_init(&poolMem_25, (tPool) poolPtr_25, POOL_SIZE * sizeof(tPool),
-	PACKET_SIZE_25);
 
 	// Creo las COLAS para cominicar las diferentes capas
 
@@ -201,18 +174,9 @@ int main(void) {
 	/* start timers, add new ones, ... */
 	/* USER CODE END RTOS_TIMERS */
 
-	/* Create the queue(s) */
-	/* creation of cola_2_3 */
-	cola_2_3Handle = osMessageQueueNew(16, sizeof(uint16_t), &cola_2_3_attributes);
-
-	/* creation of cola_3_2 */
-	cola_3_2Handle = osMessageQueueNew(16, sizeof(uint16_t), &cola_3_2_attributes);
-
-	/* creation of cola_2_1 */
-	cola_2_1Handle = osMessageQueueNew(16, sizeof(uint16_t), &cola_2_1_attributes);
-
 	/* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
+	// Creo las COLAS para cominicar las diferentes capas
 	queue_c2_to_c1 = xQueueCreate(N_QUEUE, sizeof(_sFrame));
 	configASSERT(queue_c2_to_c1 != NULL); // Gestion de errores de colas
 
@@ -224,14 +188,7 @@ int main(void) {
 	/* USER CODE END RTOS_QUEUES */
 
 	/* Create the thread(s) */
-	/* creation of capa_1 */
-	capa_1Handle = osThreadNew(funcion_capa_1, NULL, &capa_1_attributes);
-
-	/* creation of capa_2 */
-	capa_2Handle = osThreadNew(funcion_capa_2, NULL, &capa_2_attributes);
-
-	/* creation of capa_3 */
-	capa_3Handle = osThreadNew(funcion_capa_3, NULL, &capa_3_attributes);
+	/* creation of defaultTask */
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -246,7 +203,8 @@ int main(void) {
 	/* We should never get here as control is now taken by the scheduler */
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	vTaskStartScheduler(); // Enciende tick | Crea idle y pone en ready | Evalua las tareas creadas | Prioridad mas alta pasa a running
+	// Iniciar scheduler
+	vTaskStartScheduler();					// Enciende tick | Crea idle y pone en ready | Evalua las tareas creadas | Prioridad mas alta pasa a running
 	while (1) {
 		/* USER CODE END WHILE */
 
@@ -467,56 +425,20 @@ int _write(int file, char *ptr, int len) {
 }
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_funcion_capa_1 */
+/* USER CODE BEGIN Header_StartDefaultTask */
 /**
- * @brief  Function implementing the capa_1 thread.
+ * @brief  Function implementing the defaultTask thread.
  * @param  argument: Not used
  * @retval None
  */
-/* USER CODE END Header_funcion_capa_1 */
-void funcion_capa_1(void *argument) {
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument) {
 	/* USER CODE BEGIN 5 */
 	/* Infinite loop */
 	for (;;) {
 		osDelay(1);
 	}
 	/* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_funcion_capa_2 */
-/**
- * @brief Function implementing the capa_2 thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_funcion_capa_2 */
-
-void funcion_capa_2(void *argument) {
-	/* USER CODE BEGIN funcion_capa_2 */
-	printf("funcion capa 2\n\r");
-	/* Infinite loop */
-	for (;;) {
-		HAL_UART_Receive(&huart2, dataR, 1, HAL_MAX_DELAY);
-		maquina_de_estados();
-		osDelay(1);
-	}
-	/* USER CODE END funcion_capa_2 */
-}
-
-/* USER CODE BEGIN Header_funcion_capa_3 */
-/**
- * @brief Function implementing the capa_3 thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_funcion_capa_3 */
-void funcion_capa_3(void *argument) {
-	/* USER CODE BEGIN funcion_capa_3 */
-	/* Infinite loop */
-	for (;;) {
-		osDelay(1);
-	}
-	/* USER CODE END funcion_capa_3 */
 }
 
 /**
@@ -570,20 +492,3 @@ void assert_failed(uint8_t *file, uint32_t line)
 #endif /* USE_FULL_ASSERT */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
-/*==================[definiciones de datos internos]=========================*/
-
-/*==================[definiciones de datos externos]=========================*/
-
-/*==================[funcion principal]======================================*/
-
-// FUNCION PRINCIPAL, PUNTO DE ENTRADA AL PROGRAMA LUEGO DE ENCENDIDO O RESET.
-int main(void) {
-}
-
-/* hook que se ejecuta si al necesitar un objeto dinamico, no hay memoria disponible */
-void vApplicationMallocFailedHook() {
-	printf("Malloc Failed Hook!\n");
-	configASSERT(0);
-}
-/*==================[fin del archivo]========================================*/

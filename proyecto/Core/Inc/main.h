@@ -1,12 +1,37 @@
-/*=============================================================================
- * Date: 2021/07/08
- * Version: v1.0
- *===========================================================================*/
+/* USER CODE BEGIN Header */
+/**
+ ******************************************************************************
+ * @file           : main.h
+ * @brief          : Header for main.c file.
+ *                   This file contains the common defines of the application.
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under Ultimate Liberty license
+ * SLA0044, the "License"; You may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at:
+ *                             www.st.com/SLA0044
+ *
+ ******************************************************************************
+ */
+/* USER CODE END Header */
 
-#ifndef MAIN_H_
-#define MAIN_H_
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __MAIN_H
+#define __MAIN_H
 
-/*==================[inclusiones]============================================*/
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm32f4xx_hal.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "sapi.h"
@@ -14,8 +39,56 @@
 #include "semphr.h"
 #include "FreeRTOSConfig.h"
 #include "qmpool.h"
+/* USER CODE END Includes */
 
-/*==================[definiciones y macros]==================================*/
+/* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN ET */
+typedef char *tPool;
+
+/**
+ * Estructura _sFrame, para mandar por cola a las distintas capas
+ */
+typedef struct {
+	unsigned char secuencia[4];
+	char *mensaje;
+	QMPool *pool;
+} _sFrame;
+
+/* USER CODE END ET */
+
+/* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN EC */
+
+/* USER CODE END EC */
+
+/* Exported macro ------------------------------------------------------------*/
+/* USER CODE BEGIN EM */
+
+/* USER CODE END EM */
+
+/* Exported functions prototypes ---------------------------------------------*/
+void Error_Handler(void);
+
+/* USER CODE BEGIN EFP */
+
+/* USER CODE END EFP */
+
+/* Private defines -----------------------------------------------------------*/
+#define B1_Pin GPIO_PIN_13
+#define B1_GPIO_Port GPIOC
+#define USART_TX_Pin GPIO_PIN_2
+#define USART_TX_GPIO_Port GPIOA
+#define USART_RX_Pin GPIO_PIN_3
+#define USART_RX_GPIO_Port GPIOA
+#define LD2_Pin GPIO_PIN_5
+#define LD2_GPIO_Port GPIOA
+#define TMS_Pin GPIO_PIN_13
+#define TMS_GPIO_Port GPIOA
+#define TCK_Pin GPIO_PIN_14
+#define TCK_GPIO_Port GPIOA
+#define SWO_Pin GPIO_PIN_3
+#define SWO_GPIO_Port GPIOB
+/* USER CODE BEGIN Private defines */
 #define RATE 					1000
 #define PRINT_RATE_MS 			500
 #define MAX_RATE 				pdMS_TO_TICKS(RATE)
@@ -48,17 +121,12 @@
 
 #define MAXLENGFRAME	200
 
-typedef char *tPool;
+/* USER CODE END Private defines */
 
-/**
- * Estructura _sFrame, para mandar por cola a las distintas capas
- */
-typedef struct {
-	unsigned char secuencia[4];
-	char *mensaje;
-	QMPool *pool;
-} _sFrame;
+#ifdef __cplusplus
+}
+#endif
 
-/*==================[declaraciones de funciones externas]====================*/
+#endif /* __MAIN_H */
 
-#endif /* MAIN_H_ */
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
