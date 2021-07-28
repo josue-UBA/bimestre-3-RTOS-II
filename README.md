@@ -1,19 +1,20 @@
-# video uno
+# branches:
+
+## ejemplo_UART_1
 - informacion: UART basico
-- branch: UART_1
 - enlace: https://www.youtube.com/watch?v=rkHBXM9AGf4&list=PLvHxU_pY8Jf9dtWHzPJY2yyoF5WFkhugzmmmmm
 
-# video dos
+## ejemplo_UART_2
 - informacion: UART 2
-- branch: UART_2
 - enlace: https://www.youtube.com/watch?v=Wc0_T8Ec3kc&list=PLvHxU_pY8Jf9dtWHzPJY2yyoF5WFkhugz&index=2
 
-# video tres
+## ejemplo_UART_3
 - informacion: UART callback
-- branch: UART_2
 - enlace: https://www.youtube.com/watch?v=-Hz3UCTYOfA&list=PLvHxU_pY8Jf9dtWHzPJY2yyoF5WFkhugz&index=3
 
-# video cuatro
+## ejemplo_RTOS-timer
 - informacion: UART timer
-- branch: RTOS-TIMER
 - enlace: https://www.youtube.com/watch?v=9H6vhgxQTTk
+
+## alejandro
+esta lo que alejandro hizo. Se agrego librerias de RTOS I.
