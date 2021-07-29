@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +43,8 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+uint8_t dataT[14] = "desde main\n\r";
+uint8_t dataR[1] = "";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,18 +89,19 @@ int main(void) {
 	MX_GPIO_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
-	uint8_t dataT[14] = "hola\n\r";
-	uint8_t dataR[1] = "";
 
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	HAL_UART_Transmit(&huart2, dataT, 14, HAL_MAX_DELAY);
 	while (1) {
-		if (!HAL_UART_Receive(&huart2, dataR, 1, HAL_MAX_DELAY)) {
-			HAL_UART_Transmit(&huart2, dataR, 1, HAL_MAX_DELAY);
-		}
+		HAL_UART_Transmit_IT(&huart2, dataT, 14);
+		HAL_Delay(3000);
+		/*
+		 if (!HAL_UART_Receive(&huart2, dataR, 1, HAL_MAX_DELAY)) {
+		 HAL_UART_Transmit(&huart2, dataR, 1, HAL_MAX_DELAY);
+		 }
+		 */
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
@@ -211,6 +213,26 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
+int __io_putchar(int ch) {
+	uint8_t c[1];
+	c[0] = ch & 0x00FF;
+	HAL_UART_Transmit(&huart2, &*c, 1, 10);
+	return ch;
+}
+
+int _write(int file, char *ptr, int len) {
+	int DataIdx;
+	for (DataIdx = 0; DataIdx < len; DataIdx++) {
+		__io_putchar(*ptr++);
+	}
+	return len;
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+	uint8_t transmite[] = "desde callback\n\r";
+	int tam = sizeof(transmite)/sizeof(transmite[0]);
+	HAL_UART_Transmit(&huart2, transmite, tam, 100);
+}
 
 /* USER CODE END 4 */
 
