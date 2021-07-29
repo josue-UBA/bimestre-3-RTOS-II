@@ -43,7 +43,6 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t dataT[14] = "desde main\n\r";
 uint8_t dataR[1] = "";
 /* USER CODE END PV */
 
@@ -94,8 +93,10 @@ int main(void) {
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
+	//uint8_t dataT[14] = "desde main\n\r";
+	//HAL_UART_Transmit_IT(&huart2, dataT, 14);
+	HAL_UART_Receive_IT(&huart2, dataR, 1);
 	while (1) {
-		HAL_UART_Transmit_IT(&huart2, dataT, 14);
 		HAL_Delay(3000);
 		/*
 		 if (!HAL_UART_Receive(&huart2, dataR, 1, HAL_MAX_DELAY)) {
@@ -227,10 +228,16 @@ int _write(int file, char *ptr, int len) {
 	}
 	return len;
 }
-
+/*
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 	uint8_t transmite[] = "desde callback\n\r";
-	int tam = sizeof(transmite)/sizeof(transmite[0]);
+	int tam = sizeof(transmite) / sizeof(transmite[0]);
+	HAL_UART_Transmit(&huart2, transmite, tam, 100);
+}*/
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	uint8_t transmite[] = "desde callback\n\r";
+	int tam = sizeof(transmite) / sizeof(transmite[0]);
 	HAL_UART_Transmit(&huart2, transmite, tam, 100);
 }
 
