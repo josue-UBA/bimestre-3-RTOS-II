@@ -88,20 +88,15 @@ int main(void) {
 	MX_GPIO_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
-	HAL_UART_Receive_IT(&huart2, dataR, 1);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	//uint8_t dataT[14] = "desde main\n\r";
-	//HAL_UART_Transmit_IT(&huart2, dataT, 14);
+	HAL_UART_Receive_IT(&huart2, dataR, 1);
+	printf("desde main\n\r");
 	while (1) {
+		printf("dentro de while\n\r");
 		HAL_Delay(3000);
-		/*
-		 if (!HAL_UART_Receive(&huart2, dataR, 1, HAL_MAX_DELAY)) {
-		 HAL_UART_Transmit(&huart2, dataR, 1, HAL_MAX_DELAY);
-		 }
-		 */
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
@@ -235,10 +230,11 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 }*/
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	printf("%c",dataR);
 	uint8_t transmite[] = "desde callback\n\r";
-	int tam = sizeof(transmite) / sizeof(transmite[0]);
+		int tam = sizeof(transmite) / sizeof(transmite[0]);
 	HAL_UART_Transmit(&huart2, transmite, tam, 100);
-	HAL_UART_Recieve_IT()
+	HAL_UART_Receive_IT(&huart2, dataR, 1);
 }
 
 /* USER CODE END 4 */
