@@ -64,13 +64,10 @@ void init_capa2_proceso(uartMap_t uart) {
 
 	/* Inicializar la UART_USB junto con las interrupciones de Tx y Rx */
 	//uartConfig(uart, 115200);
-
 	// Seteo un callback al evento de recepcion y habilito su interrupcion
 	//uartCallbackSet(uart, UART_RECEIVE, capa2_OnRx, NULL);
-
 	// Habilito todas las interrupciones de UART_USB
 	//uartInterrupt(uart, true);
-
 	object2.bufferIn = (tPool) QMPool_get(&poolMem_200, 0);
 	object2.indexWriteRx = 0;
 	object2.state = AWAITING;
