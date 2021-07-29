@@ -33,15 +33,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef char *tPool;
-typedef enum {
-	estado_inicio, estado_parentesis, estado_almacena,
-} estado;
-typedef struct {
-	unsigned char secuencia[4];
-	char *mensaje;
-	QMPool *pool;
-} _sFrame;
 
 /* USER CODE END PTD */
 
@@ -85,10 +76,7 @@ static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
-void maquina_de_estados();
-int valida_seq();
-int valida_c();
-int valida_crc();
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -103,13 +91,6 @@ int valida_crc();
 int main(void) {
 	/* USER CODE BEGIN 1 */
 	// ---------- CONFIGURACIONES ------------------------------
-	boardConfig();					// Inicializar y configurar la plataforma
-
-	//	Creo los pools de memoria
-	QMPool_init(&poolMem_200, (tPool) poolPtr_200, POOL_SIZE * sizeof(tPool), PACKET_SIZE_200); //Tamanio del segmento de memoria reservado
-	QMPool_init(&poolMem_100, (tPool) poolPtr_100, POOL_SIZE * sizeof(tPool), PACKET_SIZE_100);
-	QMPool_init(&poolMem_50, (tPool) poolPtr_50, POOL_SIZE * sizeof(tPool), PACKET_SIZE_50);
-	QMPool_init(&poolMem_25, (tPool) poolPtr_25, POOL_SIZE * sizeof(tPool), PACKET_SIZE_25);
 	//	Reservo memoria para el memory pool
 	poolPtr_200 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
 	configASSERT(poolPtr_200!=NULL);
@@ -120,13 +101,19 @@ int main(void) {
 	poolPtr_25 = (tPool) pvPortMalloc(POOL_SIZE * sizeof(char));
 	configASSERT(poolPtr_25!=NULL);
 
+	//	Creo los pools de memoria
+	QMPool_init(&poolMem_25, (tPool) poolPtr_25, POOL_SIZE * sizeof(tPool), PACKET_SIZE_25);
+	QMPool_init(&poolMem_200, (tPool) poolPtr_200, POOL_SIZE * sizeof(tPool), PACKET_SIZE_200); //Tamanio del segmento de memoria reservado
+	QMPool_init(&poolMem_100, (tPool) poolPtr_100, POOL_SIZE * sizeof(tPool), PACKET_SIZE_100);
+	QMPool_init(&poolMem_50, (tPool) poolPtr_50, POOL_SIZE * sizeof(tPool), PACKET_SIZE_50);
+
 	// Creo las COLAS para cominicar las diferentes capas
 
 	//inicialización de capas
 	// Iniciar scheduler
 
 	// ---------- REPETIR POR SIEMPRE --------------------------
-	configASSERT(0);
+	//configASSERT(0);
 
 	// NO DEBE LLEGAR NUNCA AQUI, debido a que a este programa se ejecuta
 	// directamenteno sobre un microcontroladore y no es llamado por ningun
@@ -317,98 +304,7 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-int valida_seq() {
-	/* retorna 0 si es que hay caraceteres. Retorna 1 si todo esta bien. */
-	if (paquete[0] < '0' || '9' < paquete[0])
-		return 0;
-	if (paquete[1] < '0' || '9' < paquete[1])
-		return 0;
-	if (paquete[2] < '0' || '9' < paquete[2])
-		return 0;
-	if (paquete[3] < '0' || '9' < paquete[3])
-		return 0;
-	return 1; /* si no son numeros */
-}
-int valida_crc() {
-	/* retorna 0 si es que hay caraceteres. Retorna 1 si todo esta bien. */
-	if (paquete[contador - 1] < '0' || '9' < paquete[contador - 1])
-		return 0;
-	if (paquete[contador - 2] < '0' || '9' < paquete[contador - 2])
-		return 0;
-	else
-		return 1; /* si no son numeros */
-}
-int valida_c() {
-	if (paquete[4] == 'P' || paquete[4] == 'S' || paquete[4] == 'C')/* pascal */
-		return 1;
-	return 0; /* si no son numeros */
-}
-void maquina_de_estados() {
-	switch (estado_actual) {
-	case estado_inicio: {
-		estado_actual = estado_parentesis;
-		printf("estado inicio %c\n\r", dataR[0]);
-		break;
-	}
-	case estado_parentesis: {
-		if (dataR[0] == '(') {
-			/* entonces cambia de estado */
-			estado_actual = estado_almacena;
-			printf("estado_parentesis -> estado_almacena\n\r");
-		} else {
-			/* sigue buscando el caracter '(' */
-			estado_actual = estado_parentesis;
-			printf("estado_parentesis -> estado_parentesis\n\r");
-		}
-	}
-		break;
-	case estado_almacena: {
-		if (dataR[0] == ')') { /* se cierra la cadena. Se pasa al estado_parentesis */
-			/* modifica estado */
-			estado_actual = estado_parentesis;
-			/* para debug */
-			printf("estado_almacena -> estado_parentesis. El paquete es: %s\n\r", paquete);
-			/* valida SEQ */
-			printf("validando seq: %d\n\r", valida_seq());
-			/* valida SEQ */
-			printf("validando c: %d\n\r", valida_c());
-			/* valida CRC */
-			printf("validando CRC: %d\n\r", valida_crc());
-			/* limpia arreglo */
-			for (int i = 0; i < contador; i++) {
-				/* el valor 0 es nulo. No poner espacio porque espacio es un valor tambien */
-				paquete[i] = 0;
-			}
-			/*reinicia contador */
-			contador = 0;
-		} else if (TAM_PAQUETE <= contador) { /* 10 es el tamaño maximo permitido */
-			/* modifica estado */
-			estado_actual = estado_parentesis;
-			/* limpia arreglo */
-			for (int i = 0; i < contador; i++) {
-				/* el valor 0 es nulo. No poner espacio porque espacio es un valor tambien */
-				paquete[i] = 0;
-			}
-			/*reinicia contador */
-			contador = 0;
-			/* para debug */
-			printf("estado_almacena -> estado_parentesis / es muy grande el paquete es: %s\n\r", paquete);
-		} else {
-			/* sigue guardandado caracter */
-			contador++;
-			strcat(paquete, dataR);
-			/* modifica estado */
-			estado_actual = estado_almacena;
-			printf("estado_parentesis -> estado_almacena\n\r");
-		}
-	}
-		break;
-	default: {
-		printf("default\n\r");
-	}
-	}
-	printf("contador: %d\n\r", contador);
-}
+
 int __io_putchar(int ch) {
 	uint8_t c[1];
 	c[0] = ch & 0x00FF;
@@ -432,14 +328,7 @@ int _write(int file, char *ptr, int len) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument) {
-	/* USER CODE BEGIN 5 */
-	/* Infinite loop */
-	for (;;) {
-		osDelay(1);
-	}
-	/* USER CODE END 5 */
-}
+
 
 /**
  * @brief  Period elapsed callback in non blocking mode

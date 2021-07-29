@@ -26,26 +26,30 @@ extern QueueHandle_t queue_c3_to_c2;
 
 extern QueueHandle_t queue_c2_to_c1;
 
-void
-tarea_procesoMsg_c2(void *taskParmPtr);
+void tarea_procesoMsg_c2(void *taskParmPtr);
 
 extern QMPool poolMem_200, poolMem_100, poolMem_50, poolMem_25;
 
-static void
-procesoFrame_c2();
+extern UART_HandleTypeDef huart2;
+static void procesoFrame_c2();
+uint8_t caracter[1] = "";
 
-void capa2_OnRx(void *noUsado) {
-
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 	if (object2.bufferIn == NULL) {
 		object2.bufferIn = (tPool) QMPool_get(&poolMem_200, 0);
 		if (object2.bufferIn == NULL) {
-			uint8_t caracter = uartRxRead(object2.usedUart); //leo el caracter para desocupar el buffer
+			//uint8_t caracter = uartRxRead(object2.usedUart); //leo el caracter para desocupar el buffer
+			HAL_UART_Receive_IT(&huart2, caracter, 1);
 			object2.state = END;
 		} else {
-			object2.bufferIn[object2.indexWriteRx] = uartRxRead(object2.usedUart); //REcibo el caracter por única vez aquí
+			//object2.bufferIn[object2.indexWriteRx] = uartRxRead(object2.usedUart); //REcibo el caracter por única vez aquí
+			HAL_UART_Receive_IT(&huart2, caracter, 1);
+			object2.bufferIn[object2.indexWriteRx] = caracter[0];
 		}
 	} else {
-		object2.bufferIn[object2.indexWriteRx] = uartRxRead(object2.usedUart); //REcibo el caracter aquí si no es NULL el buffer
+		//object2.bufferIn[object2.indexWriteRx] = uartRxRead(object2.usedUart); //REcibo el caracter aquí si no es NULL el buffer
+		HAL_UART_Receive_IT(&huart2, caracter, 1);
+		object2.bufferIn[object2.indexWriteRx] = caracter[0];
 	}
 
 	if (object2.bufferIn != NULL) {
@@ -59,13 +63,13 @@ void init_capa2_proceso(uartMap_t uart) {
 	BaseType_t res;
 
 	/* Inicializar la UART_USB junto con las interrupciones de Tx y Rx */
-	uartConfig(uart, 115200);
+	//uartConfig(uart, 115200);
 
 	// Seteo un callback al evento de recepcion y habilito su interrupcion
-	uartCallbackSet(uart, UART_RECEIVE, capa2_OnRx, NULL);
+	//uartCallbackSet(uart, UART_RECEIVE, capa2_OnRx, NULL);
 
 	// Habilito todas las interrupciones de UART_USB
-	uartInterrupt(uart, true);
+	//uartInterrupt(uart, true);
 
 	object2.bufferIn = (tPool) QMPool_get(&poolMem_200, 0);
 	object2.indexWriteRx = 0;
