@@ -45,8 +45,8 @@ void tarea_print_c1(void *taskParmPtr) {
 	while (TRUE) {
 		if ((xQueueReceive(queue_c2_to_c1, &msg, portMAX_DELAY)) == pdTRUE) {
 			index = 0;
-			while (msg.mensaje[index] != '\0')
-				uartTxWrite(currentUart, msg.mensaje[index]);
+			while (msg.mensaje[index] != '\0'){}
+				//uartTxWrite(currentUart, msg.mensaje[index]);
 		}
 		// Libero el bloque de memoria que ya fue trasmitido
 		QMPool_put(msg.pool, msg.mensaje);

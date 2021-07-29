@@ -34,7 +34,7 @@ extern UART_HandleTypeDef huart2;
 static void procesoFrame_c2();
 uint8_t caracter[1] = "";
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (object2.bufferIn == NULL) {
 		object2.bufferIn = (tPool) QMPool_get(&poolMem_200, 0);
 		if (object2.bufferIn == NULL) {
@@ -68,6 +68,7 @@ void init_capa2_proceso(uartMap_t uart) {
 	//uartCallbackSet(uart, UART_RECEIVE, capa2_OnRx, NULL);
 	// Habilito todas las interrupciones de UART_USB
 	//uartInterrupt(uart, true);
+	HAL_UART_Receive_IT(&huart2, caracter, 1);
 	object2.bufferIn = (tPool) QMPool_get(&poolMem_200, 0);
 	object2.indexWriteRx = 0;
 	object2.state = AWAITING;
