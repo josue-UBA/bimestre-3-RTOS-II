@@ -58,6 +58,8 @@
 UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = { .name = "defaultTask", .stack_size = 128 * 4, .priority = (osPriority_t) osPriorityNormal, };
 /* USER CODE BEGIN PV */
 tPool poolPtr_200, poolPtr_100, poolPtr_50, poolPtr_25; //puntero al segmento de memoria que albergara el pool
 QMPool poolMem_200, poolMem_100, poolMem_50, poolMem_25; //memory pool (contienen la informacion que necesita la biblioteca qmpool.h)
@@ -143,7 +145,9 @@ int main(void) {
 	MX_GPIO_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
-
+	uint8_t dataT[14] = "desde main\n\r";
+	int tam=sizeof(dataT)/sizeof(dataT[0]);
+	HAL_UART_Transmit(&huart2, dataT, tam, HAL_MAX_DELAY);
 	/* USER CODE END 2 */
 
 	/* Init scheduler */
@@ -176,6 +180,7 @@ int main(void) {
 
 	/* Create the thread(s) */
 	/* creation of defaultTask */
+	defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -186,6 +191,7 @@ int main(void) {
 	/* USER CODE END RTOS_EVENTS */
 
 	/* Start scheduler */
+	//osKernelStart();
 
 	/* We should never get here as control is now taken by the scheduler */
 	/* Infinite loop */
@@ -328,7 +334,14 @@ int _write(int file, char *ptr, int len) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-
+void StartDefaultTask(void *argument) {
+	/* USER CODE BEGIN 5 */
+	/* Infinite loop */
+	for (;;) {
+		osDelay(1);
+	}
+	/* USER CODE END 5 */
+}
 
 /**
  * @brief  Period elapsed callback in non blocking mode
