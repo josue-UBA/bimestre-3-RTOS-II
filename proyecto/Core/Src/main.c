@@ -129,9 +129,6 @@ int main(void) {
 	HAL_Init();
 
 	/* USER CODE BEGIN Init */
-	init_capa1_impresion(UART_USB);
-	init_capa2_proceso(UART_USB);
-	init_capa3_aplicacion();
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -148,6 +145,9 @@ int main(void) {
 	uint8_t dataT[14] = "desde main\n\r";
 	int tam=sizeof(dataT)/sizeof(dataT[0]);
 	HAL_UART_Transmit(&huart2, dataT, tam, HAL_MAX_DELAY);
+	init_capa1_impresion(UART_USB);
+	init_capa2_proceso(UART_USB);
+	init_capa3_aplicacion();
 	/* USER CODE END 2 */
 
 	/* Init scheduler */
