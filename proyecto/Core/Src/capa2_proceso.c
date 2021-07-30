@@ -35,6 +35,7 @@ static void procesoFrame_c2();
 uint8_t caracter[1] = "";
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	printf("aqui toy!\n\r");
 	if (object2.bufferIn == NULL) {
 		object2.bufferIn = (tPool) QMPool_get(&poolMem_200, 0);
 		if (object2.bufferIn == NULL) {
@@ -55,12 +56,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (object2.bufferIn != NULL) {
 		procesoFrame_c2();
 	}
-
 }
 
 void init_capa2_proceso(uartMap_t uart) {
 
-	BaseType_t res;
 
 	/* Inicializar la UART_USB junto con las interrupciones de Tx y Rx */
 	//uartConfig(uart, 115200);
@@ -68,6 +67,9 @@ void init_capa2_proceso(uartMap_t uart) {
 	//uartCallbackSet(uart, UART_RECEIVE, capa2_OnRx, NULL);
 	// Habilito todas las interrupciones de UART_USB
 	//uartInterrupt(uart, true);
+	BaseType_t res;
+	uint8_t dataT[14]= "hola\n\r";
+	HAL_UART_Transmit(&huart2, dataT, 1, HAL_MAX_DELAY);
 	HAL_UART_Receive_IT(&huart2, caracter, 1);
 	object2.bufferIn = (tPool) QMPool_get(&poolMem_200, 0);
 	object2.indexWriteRx = 0;
@@ -99,7 +101,7 @@ void tarea_procesoMsg_c2(void *taskParmPtr) {
 	// ---------- REPETIR POR SIEMPRE --------------------------
 
 	while (TRUE) {
-		if ((xQueueReceive(queue_c3_to_c2, &msg, portMAX_DELAY)) == pdTRUE) {
+		if ((xQueueReceive(queue_c3_to_c2, &msg, 100)) == pdTRUE) {
 			/* Pido memoria auxiliar para armar el paquete */
 			auxmsg = (tPool) QMPool_get(msg.pool, 0);
 			if (auxmsg != NULL) {
